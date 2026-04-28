@@ -1,0 +1,14 @@
+# Site settings
+title: Dev Blog
+description: Thoughts on software engineering and coding practices
+url: "" # your GitHub Pages URL will go here, e.g., https://username.github.io
+baseurl: "" # if your blog is in a subdirectory, specify it here
+
+# Build settings
+markdown: kramdown
+theme: minima
+
+# Exclude from processing
+exclude:
+  - first.txt
+  - README.md

@@ -1,0 +1,137 @@
+---
+layout: post
+title: "Tightening the Feedback Loop with Coding Styles"
+date: 2026-04-28
+categories: coding-practices
+---
+
+Tightening the human feedback loop is prominent now as a bottleneck with agent assisted coding. Whilst coding "practices" like continuous deployment and TDD are already espoused by many, I wanted to mention "styles", instead, of coding.
+
+Practices from functional programming, like guard clauses and immutability can structure code in a way that makes it clearer which changes you *don't* need to review. Core to this is seeing code as states and outcomes, which is a higher abstraction level than how some typically read their code, i.e. "imperatively", in loops and conditions. Working at a higher abstraction level = more comprehension with less effort, which is something that also goes far with LLMs.
+
+These examples depict real world usecases of existing code + a delta of change representing challenges with maintainability of code. By the way, "memory" features like Claude.md make inculcating these patterns trivial, it is your human brain you must train to see the patterns in this style of coding.
+
+## 1. Early Return Pattern/Using Guard Clauses
+
+As computer scientists, our ability to break problems into sub problems before solving them is core to a systems approach. Similarly, in inductive reasoning in maths, we identify and get rid of simpler cases first to make our lives easier.
+
+Consider the following example, which I have frequently seen in codebases, of nested statements.
+
+```java
+public boolean assemblyCheck() {
+    boolean result = true;
+    if (pants.arePressed()) {
+        if (belt.isBuckled()) {
+            if (collar.isFixed()) {
+                if (buttons.areFastened()) {
+                    if (jacket.isBrushed()) {
+                        if (cuffs.areAdjusted()) {
+                            if (tie.isStraightened()) {
+                                result = true;
+                            } else {
+                                teacher.straighten(tie);
+                                result = false;
+                            }
+                        } else {
+                            result = false;
+                        }
+                    } else {
+                        student.remove(jacket);
+                        result = false;
+                    }
+                } else {
+                    result = false;
+                }
+            } else {
+                teacher.fix(collar);
+                result = false;
+            }
+        } else {
+            result = false;
+        }
+    } else {
+        result = false;
+    }
+    return result;
+}
+```
+
+Suppose an agent made a change as the BasketService is now meant to be used. Can you spot the error?
+
+```java
+public boolean assemblyCheck() {
+    boolean result = true;
+    if (pants.arePressed()) {
+        if (belt.isBuckled()) {
+            if (jacket.isBrushed()) {
+                if (collar.isFixed()) {
+                    if (buttons.areFastened()) {
+                        if (cuffs.areAdjusted()) {
+                            if (tie.isStraightened()) {
+                                result = true;
+                            } else {
+                                teacher.straighten(tie);
+                                result = false;
+                            }
+                        } else {
+                            result = false;
+                        }
+                    } else {
+                        result = false;
+                    }
+                } else {
+                    student.remove(jacket);
+                    Jacket substituteJacket = basketService.fetchSubstitute();
+                    student.wear(substituteJacket);
+                    result = false;
+                }
+            } else {
+                result = false;
+            }
+        } else {
+            result = false;
+        }
+    } else {
+        result = false;
+    }
+    return result;
+}
+```
+
+Consider below the case with guard clauses.
+
+```java
+public boolean assemblyCheck() {
+    if (!shirt.isIroned()) return false;
+    if (!shoelaces.areTied()) return false;
+    if (!shoes.arePolished()) return false;
+    if (!pants.arePressed()) return false;
+    if (!belt.isBuckled()) return false;
+    if (!collar.isFixed()) return false;
+    if (!buttons.areFastened()) {
+        student.remove(jacket);
+        Jacket substituteJacket = basketService.fetchSubstitute();
+        student.wear(substituteJacket);
+        return false;
+    }
+    if (!jacket.isBrushed()) return false;
+    if (!cuffs.areAdjusted()) return false;
+    if (!tie.isStraightened()) {
+        teacher.straighten(tie);
+        return false;
+    }
+    return true;
+}
+```
+
+Can you spot the error now?
+
+Nesting clauses fling "else" clauses far down the line, making it non trivial to decipher which code is logically coupled to which case.
+
+Where would you add the new condition, `pants.areTheRightSize()`?
+
+In nested code, introducing another level of nesting at the deepest level can feel intuitive, before any else statements muddy up the landscape. Switching up the order of if-cases is jarring with moving braces and logic to be deciphered to ensure correctness is maintained.
+
+Consider how much easier it is to add a new condition to the early-return style code. It is much easier to notice in this style also that there is already a condition coupled with shirt in the method (`if(!shirt.isIroned())`) in this style, and factor it out into a separate method.
+
+It is no surprise that in codebases where nesting is preferred, methods often run very long. This harms readability: if there are 5 methods, 1 of them has a change, that is much easier to review when you might not need to look at the other 4 methods unless they are referenced, vs 1 huge method that has a change and all the variables in that method need to be understood that their state, perhaps a boolean flag or an enum, is not affected by those changes.
