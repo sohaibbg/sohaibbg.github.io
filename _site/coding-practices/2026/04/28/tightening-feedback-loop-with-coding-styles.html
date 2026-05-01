@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Shrinking the Search Space for Code Reviews | Sohaib Baig</title>
+<meta name="generator" content="Jekyll v3.10.0" />
+<meta property="og:title" content="Shrinking the Search Space for Code Reviews" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Tightening the human feedback loop is prominent now as a bottleneck with agent assisted coding. Whilst coding “practices” like continuous deployment and TDD are already espoused by many, I wanted to mention “styles”, instead, of coding." />
+<meta property="og:description" content="Tightening the human feedback loop is prominent now as a bottleneck with agent assisted coding. Whilst coding “practices” like continuous deployment and TDD are already espoused by many, I wanted to mention “styles”, instead, of coding." />
+<link rel="canonical" href="http://localhost:4000/coding-practices/2026/04/28/tightening-feedback-loop-with-coding-styles.html" />
+<meta property="og:url" content="http://localhost:4000/coding-practices/2026/04/28/tightening-feedback-loop-with-coding-styles.html" />
+<meta property="og:site_name" content="Sohaib Baig" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2026-04-28T00:00:00+02:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Shrinking the Search Space for Code Reviews" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2026-04-28T00:00:00+02:00","datePublished":"2026-04-28T00:00:00+02:00","description":"Tightening the human feedback loop is prominent now as a bottleneck with agent assisted coding. Whilst coding “practices” like continuous deployment and TDD are already espoused by many, I wanted to mention “styles”, instead, of coding.","headline":"Shrinking the Search Space for Code Reviews","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/coding-practices/2026/04/28/tightening-feedback-loop-with-coding-styles.html"},"url":"http://localhost:4000/coding-practices/2026/04/28/tightening-feedback-loop-with-coding-styles.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Sohaib Baig" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Sohaib Baig</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Shrinking the Search Space for Code Reviews</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2026-04-28T00:00:00+02:00" itemprop="datePublished">Apr 28, 2026
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>Tightening the human feedback loop is prominent now as a bottleneck with agent assisted coding. Whilst coding “practices” like continuous deployment and TDD are already espoused by many, I wanted to mention “styles”, instead, of coding.</p>
+
+<p>The core idea is learning to code in a style that makes the boundaries of change clear, such that when changes are made, typically by an AI agent, you can be confident that unexpected “side-effects” will not occur as a result. This entails using practices like guard clauses and immutability which come from functional programming. Over time it will help evolve in you a sense of seeing code as states and outcomes, a level of abstraction higher than seeing code “imperatively”, i.e. in loops and conditions. Working at a higher abstraction level = more comprehension with less effort, which is something that also goes far with LLMs.</p>
+
+<p>The benefit is twofold: not only do code reviews become faster, but the codebase is left in a more maintainable state. Changes become easier to reason about, reducing the cognitive load on both human reviewers and AI agents.</p>
+
+<p>These examples depict real world usecases of existing code + a delta of change representing challenges with maintainability of code. By the way, “memory” features like Claude.md make inculcating these patterns trivial, it is your human brain you must train to see the patterns in this style of coding.</p>
+
+<h2 id="1-early-return-patternusing-guard-clauses">1. Early Return Pattern/Using Guard Clauses</h2>
+
+<p>As computer scientists, our ability to break problems into sub problems before solving them is core to a systems approach. Similarly, in inductive reasoning in maths, we identify and get rid of simpler cases first to make our lives easier.</p>
+
+<p>Consider the following example, which I have frequently seen in codebases, of nested statements.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">assemblyCheck</span><span class="o">()</span> <span class="o">{</span>
+    <span class="kt">boolean</span> <span class="n">result</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">pants</span><span class="o">.</span><span class="na">arePressed</span><span class="o">())</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">belt</span><span class="o">.</span><span class="na">isBuckled</span><span class="o">())</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">collar</span><span class="o">.</span><span class="na">isFixed</span><span class="o">())</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">buttons</span><span class="o">.</span><span class="na">areFastened</span><span class="o">())</span> <span class="o">{</span>
+                    <span class="k">if</span> <span class="o">(</span><span class="n">jacket</span><span class="o">.</span><span class="na">isBrushed</span><span class="o">())</span> <span class="o">{</span>
+                        <span class="k">if</span> <span class="o">(</span><span class="n">cuffs</span><span class="o">.</span><span class="na">areAdjusted</span><span class="o">())</span> <span class="o">{</span>
+                            <span class="k">if</span> <span class="o">(</span><span class="n">tie</span><span class="o">.</span><span class="na">isStraightened</span><span class="o">())</span> <span class="o">{</span>
+                                <span class="n">result</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+                            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                                <span class="n">teacher</span><span class="o">.</span><span class="na">straighten</span><span class="o">(</span><span class="n">tie</span><span class="o">);</span>
+                                <span class="n">result</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+                            <span class="o">}</span>
+                        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                            <span class="n">result</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+                        <span class="o">}</span>
+                    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                        <span class="n">student</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="n">jacket</span><span class="o">);</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+                    <span class="o">}</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+                <span class="o">}</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                <span class="n">teacher</span><span class="o">.</span><span class="na">fix</span><span class="o">(</span><span class="n">collar</span><span class="o">);</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Suppose an agent made a change as the BasketService is now meant to be used. Can you spot the error?</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">assemblyCheck</span><span class="o">()</span> <span class="o">{</span>
+    <span class="kt">boolean</span> <span class="n">result</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">pants</span><span class="o">.</span><span class="na">arePressed</span><span class="o">())</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">belt</span><span class="o">.</span><span class="na">isBuckled</span><span class="o">())</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">jacket</span><span class="o">.</span><span class="na">isBrushed</span><span class="o">())</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">collar</span><span class="o">.</span><span class="na">isFixed</span><span class="o">())</span> <span class="o">{</span>
+                    <span class="k">if</span> <span class="o">(</span><span class="n">buttons</span><span class="o">.</span><span class="na">areFastened</span><span class="o">())</span> <span class="o">{</span>
+                        <span class="k">if</span> <span class="o">(</span><span class="n">cuffs</span><span class="o">.</span><span class="na">areAdjusted</span><span class="o">())</span> <span class="o">{</span>
+                            <span class="k">if</span> <span class="o">(</span><span class="n">tie</span><span class="o">.</span><span class="na">isStraightened</span><span class="o">())</span> <span class="o">{</span>
+                                <span class="n">result</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+                            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                                <span class="n">teacher</span><span class="o">.</span><span class="na">straighten</span><span class="o">(</span><span class="n">tie</span><span class="o">);</span>
+                                <span class="n">result</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+                            <span class="o">}</span>
+                        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                            <span class="n">result</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+                        <span class="o">}</span>
+                    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+                    <span class="o">}</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="n">student</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="n">jacket</span><span class="o">);</span>
+                    <span class="nc">Jacket</span> <span class="n">substituteJacket</span> <span class="o">=</span> <span class="n">basketService</span><span class="o">.</span><span class="na">fetchSubstitute</span><span class="o">();</span>
+                    <span class="n">student</span><span class="o">.</span><span class="na">wear</span><span class="o">(</span><span class="n">substituteJacket</span><span class="o">);</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+                <span class="o">}</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Consider below the functionally equivalent case with guard clauses.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">assemblyCheck</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">shirt</span><span class="o">.</span><span class="na">isIroned</span><span class="o">())</span> <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">shoelaces</span><span class="o">.</span><span class="na">areTied</span><span class="o">())</span> <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">shoes</span><span class="o">.</span><span class="na">arePolished</span><span class="o">())</span> <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">pants</span><span class="o">.</span><span class="na">arePressed</span><span class="o">())</span> <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">belt</span><span class="o">.</span><span class="na">isBuckled</span><span class="o">())</span> <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">collar</span><span class="o">.</span><span class="na">isFixed</span><span class="o">())</span> <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">buttons</span><span class="o">.</span><span class="na">areFastened</span><span class="o">())</span> <span class="o">{</span>
+        <span class="n">student</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="n">jacket</span><span class="o">);</span>
+        <span class="nc">Jacket</span> <span class="n">substituteJacket</span> <span class="o">=</span> <span class="n">basketService</span><span class="o">.</span><span class="na">fetchSubstitute</span><span class="o">();</span>
+        <span class="n">student</span><span class="o">.</span><span class="na">wear</span><span class="o">(</span><span class="n">substituteJacket</span><span class="o">);</span>
+        <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">jacket</span><span class="o">.</span><span class="na">isBrushed</span><span class="o">())</span> <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">cuffs</span><span class="o">.</span><span class="na">areAdjusted</span><span class="o">())</span> <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">tie</span><span class="o">.</span><span class="na">isStraightened</span><span class="o">())</span> <span class="o">{</span>
+        <span class="n">teacher</span><span class="o">.</span><span class="na">straighten</span><span class="o">(</span><span class="n">tie</span><span class="o">);</span>
+        <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Can you spot the error now? (The nested and early return code snippets are functionally equivalent.)</p>
+
+<p>The error is that the <code class="language-plaintext highlighter-rouge">basketService</code> code is tied to the <code class="language-plaintext highlighter-rouge">collar.isFixed()</code> condition instead of the <code class="language-plaintext highlighter-rouge">jacket.isBrushed()</code> condition where it should be. Nesting clauses fling “else” clauses far down the line, making it non trivial to decipher which code is logically coupled to which case.</p>
+
+<p>Where would you add the new condition, <code class="language-plaintext highlighter-rouge">pants.areTheRightSize()</code>?</p>
+
+<p>In nested code, introducing another level of nesting at the deepest level can feel intuitive, before any else statements require you to shuffle around brackets. Switching up the order of if-cases is jarring with moving braces and logic to be deciphered to ensure correctness is maintained. With the early-return style, reordering conditions in most IDEs is a simple select then Alt+Up or Alt+Down, versus nested code where braces have to be carefully aligned.</p>
+
+<p>Consider how much easier it is to add a new condition to the early-return style code. It is much easier to notice in this style also that there is already a condition coupled with pants in the method (<code class="language-plaintext highlighter-rouge">if(!pants.arePressed())</code>) in this style, and factor it out into a separate method.</p>
+
+<p>For example, here’s the refactored version with pants checks extracted:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">assemblyCheck</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">shirt</span><span class="o">.</span><span class="na">isIroned</span><span class="o">())</span> <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">shoelaces</span><span class="o">.</span><span class="na">areTied</span><span class="o">())</span> <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">shoes</span><span class="o">.</span><span class="na">arePolished</span><span class="o">())</span> <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">checkPants</span><span class="o">())</span> <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">belt</span><span class="o">.</span><span class="na">isBuckled</span><span class="o">())</span> <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">collar</span><span class="o">.</span><span class="na">isFixed</span><span class="o">())</span> <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">buttons</span><span class="o">.</span><span class="na">areFastened</span><span class="o">())</span> <span class="o">{</span>
+        <span class="n">student</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="n">jacket</span><span class="o">);</span>
+        <span class="nc">Jacket</span> <span class="n">substituteJacket</span> <span class="o">=</span> <span class="n">basketService</span><span class="o">.</span><span class="na">fetchSubstitute</span><span class="o">();</span>
+        <span class="n">student</span><span class="o">.</span><span class="na">wear</span><span class="o">(</span><span class="n">substituteJacket</span><span class="o">);</span>
+        <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">jacket</span><span class="o">.</span><span class="na">isBrushed</span><span class="o">())</span> <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">cuffs</span><span class="o">.</span><span class="na">areAdjusted</span><span class="o">())</span> <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">tie</span><span class="o">.</span><span class="na">isStraightened</span><span class="o">())</span> <span class="o">{</span>
+        <span class="n">teacher</span><span class="o">.</span><span class="na">straighten</span><span class="o">(</span><span class="n">tie</span><span class="o">);</span>
+        <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+<span class="o">}</span>
+
+<span class="kd">private</span> <span class="kt">boolean</span> <span class="nf">checkPants</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">pants</span><span class="o">.</span><span class="na">arePressed</span><span class="o">()</span> <span class="o">&amp;&amp;</span> <span class="n">pants</span><span class="o">.</span><span class="na">areTheRightSize</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>It is no surprise that in codebases where nesting is preferred, methods often run very long. This harms readability: if there are 5 methods and 1 of them has a change, you only need to review that one method unless others are referenced. With 1 huge method containing a change, you need to check all the variables to catch unexpected side effects on state being used for control flow elsewhere in the method.</p>
+
+<h2 id="2-smaller-methods-and-the-namespace-advantage">2. Smaller Methods and the Namespace Advantage</h2>
+
+<p>Refactoring into smaller methods has an often overlooked benefit: better naming. In long methods with large scopes, the namespace shrinks, leading to variable names with 3-4 prefixes that ultimately don’t make immediate sense either. In smaller methods, you can use simpler names because the method name itself is part of your mental context window.</p>
+
+<p>Consider this typical long method:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">processUserOrder</span><span class="o">()</span> <span class="o">{</span>
+    <span class="c1">// ... 50 lines of code ...</span>
+    
+    <span class="kt">boolean</span> <span class="n">userOrderPaymentVerified</span> <span class="o">=</span> <span class="n">paymentService</span><span class="o">.</span><span class="na">verify</span><span class="o">(</span><span class="n">order</span><span class="o">);</span>
+    <span class="nc">String</span> <span class="n">userOrderPaymentTransactionId</span> <span class="o">=</span> <span class="n">payment</span><span class="o">.</span><span class="na">getTransactionId</span><span class="o">();</span>
+    <span class="kt">boolean</span> <span class="n">userOrderInventoryAvailable</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="na">check</span><span class="o">(</span><span class="n">order</span><span class="o">.</span><span class="na">items</span><span class="o">);</span>
+    <span class="nc">String</span> <span class="n">userOrderInventoryReservationId</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="na">reserve</span><span class="o">(</span><span class="n">order</span><span class="o">.</span><span class="na">items</span><span class="o">);</span>
+    <span class="kt">boolean</span> <span class="n">userOrderShippingAddressValid</span> <span class="o">=</span> <span class="n">validateAddress</span><span class="o">(</span><span class="n">user</span><span class="o">.</span><span class="na">shippingAddress</span><span class="o">);</span>
+    <span class="nc">String</span> <span class="n">userOrderShippingTrackingNumber</span> <span class="o">=</span> <span class="n">shipping</span><span class="o">.</span><span class="na">createLabel</span><span class="o">(</span><span class="n">order</span><span class="o">);</span>
+    
+    <span class="k">if</span> <span class="o">(</span><span class="n">userOrderPaymentVerified</span> <span class="o">&amp;&amp;</span> <span class="n">userOrderInventoryAvailable</span> <span class="o">&amp;&amp;</span> <span class="n">userOrderShippingAddressValid</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">// ... more code with these long names ...</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Every variable needs a prefix (<code class="language-plaintext highlighter-rouge">userOrder</code> + <code class="language-plaintext highlighter-rouge">Payment</code> + <code class="language-plaintext highlighter-rouge">Verified</code>) because in a large scope with many concerns, you need to disambiguate. The method handles payment, inventory, and shipping all at once, so variable names become bloated.</p>
+
+<p>Now contrast with smaller, focused methods:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">processUserOrder</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">verifyPayment</span><span class="o">(</span><span class="n">order</span><span class="o">))</span> <span class="k">return</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">reserveInventory</span><span class="o">(</span><span class="n">order</span><span class="o">))</span> <span class="k">return</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">scheduleShipping</span><span class="o">(</span><span class="n">order</span><span class="o">))</span> <span class="k">return</span><span class="o">;</span>
+    <span class="n">completeOrder</span><span class="o">(</span><span class="n">order</span><span class="o">);</span>
+<span class="o">}</span>
+
+<span class="kd">private</span> <span class="kt">boolean</span> <span class="nf">verifyPayment</span><span class="o">(</span><span class="nc">Order</span> <span class="n">order</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kt">boolean</span> <span class="n">isVerified</span> <span class="o">=</span> <span class="n">paymentService</span><span class="o">.</span><span class="na">verify</span><span class="o">(</span><span class="n">order</span><span class="o">);</span>
+    <span class="nc">String</span> <span class="n">transactionId</span> <span class="o">=</span> <span class="n">payment</span><span class="o">.</span><span class="na">getTransactionId</span><span class="o">();</span>
+    
+    <span class="k">if</span> <span class="o">(</span><span class="n">isVerified</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">order</span><span class="o">.</span><span class="na">setTransactionId</span><span class="o">(</span><span class="n">transactionId</span><span class="o">);</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+<span class="o">}</span>
+
+<span class="kd">private</span> <span class="kt">boolean</span> <span class="nf">reserveInventory</span><span class="o">(</span><span class="nc">Order</span> <span class="n">order</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kt">boolean</span> <span class="n">isAvailable</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="na">check</span><span class="o">(</span><span class="n">order</span><span class="o">.</span><span class="na">items</span><span class="o">);</span>
+    <span class="nc">String</span> <span class="n">reservationId</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="na">reserve</span><span class="o">(</span><span class="n">order</span><span class="o">.</span><span class="na">items</span><span class="o">);</span>
+    
+    <span class="k">if</span> <span class="o">(</span><span class="n">isAvailable</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">order</span><span class="o">.</span><span class="na">setReservationId</span><span class="o">(</span><span class="n">reservationId</span><span class="o">);</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+<span class="o">}</span>
+
+<span class="kd">private</span> <span class="kt">boolean</span> <span class="nf">scheduleShipping</span><span class="o">(</span><span class="nc">Order</span> <span class="n">order</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kt">boolean</span> <span class="n">isAddressValid</span> <span class="o">=</span> <span class="n">validateAddress</span><span class="o">(</span><span class="n">user</span><span class="o">.</span><span class="na">shippingAddress</span><span class="o">);</span>
+    <span class="nc">String</span> <span class="n">trackingNumber</span> <span class="o">=</span> <span class="n">shipping</span><span class="o">.</span><span class="na">createLabel</span><span class="o">(</span><span class="n">order</span><span class="o">);</span>
+    
+    <span class="k">if</span> <span class="o">(</span><span class="n">isAddressValid</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">order</span><span class="o">.</span><span class="na">setTrackingNumber</span><span class="o">(</span><span class="n">trackingNumber</span><span class="o">);</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>In small methods, the method name can be relied upon to already be in your mental context window, so you don’t need to repeat yourself. The freer namespace enables you to assign more specific, relevant and less ambiguous names.</p>
+
+<h2 id="3-scattered-state-mutation-and-function-purity">3. Scattered State Mutation and Function Purity</h2>
+
+<p>Consider the following shopping basket implementation:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ShoppingBasket</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">LineItem</span><span class="o">&gt;</span> <span class="n">items</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">double</span> <span class="n">totalCost</span><span class="o">;</span>
+    
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">addItem</span><span class="o">(</span><span class="nc">String</span> <span class="n">productId</span><span class="o">,</span> <span class="kt">int</span> <span class="n">quantity</span><span class="o">,</span> <span class="kt">double</span> <span class="n">unitPrice</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">LineItem</span> <span class="n">item</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">LineItem</span><span class="o">(</span><span class="n">productId</span><span class="o">,</span> <span class="n">quantity</span><span class="o">,</span> <span class="n">unitPrice</span><span class="o">);</span>
+        <span class="n">items</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">item</span><span class="o">);</span>
+        <span class="n">totalCost</span> <span class="o">+=</span> <span class="n">unitPrice</span> <span class="o">*</span> <span class="n">quantity</span><span class="o">;</span>
+    <span class="o">}</span>
+    
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">removeItem</span><span class="o">(</span><span class="nc">String</span> <span class="n">productId</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">LineItem</span> <span class="n">item</span> <span class="o">=</span> <span class="n">findItem</span><span class="o">(</span><span class="n">productId</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">item</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">items</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="n">item</span><span class="o">);</span>
+            <span class="n">totalCost</span> <span class="o">-=</span> <span class="n">item</span><span class="o">.</span><span class="na">getUnitPrice</span><span class="o">()</span> <span class="o">*</span> <span class="n">item</span><span class="o">.</span><span class="na">getQuantity</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateQuantity</span><span class="o">(</span><span class="nc">String</span> <span class="n">productId</span><span class="o">,</span> <span class="kt">int</span> <span class="n">newQuantity</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">LineItem</span> <span class="n">item</span> <span class="o">=</span> <span class="n">findItem</span><span class="o">(</span><span class="n">productId</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">item</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="kt">int</span> <span class="n">oldQuantity</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="na">getQuantity</span><span class="o">();</span>
+            <span class="n">item</span><span class="o">.</span><span class="na">setQuantity</span><span class="o">(</span><span class="n">newQuantity</span><span class="o">);</span>
+            <span class="n">totalCost</span> <span class="o">+=</span> <span class="n">item</span><span class="o">.</span><span class="na">getUnitPrice</span><span class="o">()</span> <span class="o">*</span> <span class="o">(</span><span class="n">newQuantity</span> <span class="o">-</span> <span class="n">oldQuantity</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    
+    <span class="kd">public</span> <span class="kt">double</span> <span class="nf">getTotalCost</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">totalCost</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">totalCost</code> is a property of the class. Each method is like an event that updates its value. Can you spot the bug here?</p>
+
+<p>Mutable state is typically obscuring two realities about your code:</p>
+<ol>
+  <li>Every control flow of every method where that property is mutated (<code class="language-plaintext highlighter-rouge">totalCost += whatever</code>) represents a scattered logic. This logic can be extracted from across those methods and unified into one, new, communicatively named method (such as <code class="language-plaintext highlighter-rouge">calculateTotalCost()</code> in our case). Doing this leaves methods lighter and more maintainable.</li>
+  <li>Your methods have deceptive return types. The output of your methods is not just the returned object/void, but also the delta of change to each mutated property.</li>
+</ol>
+
+<p>Your job then must be to realize that there is a scope one level above this current scope that is both (1) using your methods, and (2) relying on the state they are mutating. Here is where you should process the mutating state. You realize the needed value when needed, in the proximity of where it is actually being used, and you give this variable a name that is more communicative of how it is actually being used in that stage of execution, something that you will thank yourself for doing later.</p>
+
+<p>Additionally, this is easier to maintain. Tomorrow if you realize you want to change totalCost based on time specific discounts for Christmas or Labor Day or so, you can do that swapping the calculated value with an output from a service that can be swapped at runtime. Just one maintenance scenario that would have been trickier to otherwise accomplish with deeply rooted mutating state.</p>
+
+<h3 id="function-purity-as-a-spectrum">Function Purity as a Spectrum</h3>
+
+<p>The definition for functions was taught to me in grade school, a function is something that, for a given input, always maps it to the same output.</p>
+
+<p>The input for a function is its arguments. You only need to understand the arguments passed and the method body to be able to make changes to it.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">static</span> <span class="kt">double</span> <span class="nf">calculateDiscount</span><span class="o">(</span><span class="kt">double</span> <span class="n">price</span><span class="o">,</span> <span class="kt">double</span> <span class="n">rate</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">price</span> <span class="o">*</span> <span class="n">rate</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>The input for methods is their arguments + the properties the object its called on has access to. To make changes to a method, you need to understand the arguments, the method body, and additionally these object properties.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PricingCalculator</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="kt">double</span> <span class="n">discountRate</span><span class="o">;</span>
+    
+    <span class="kd">public</span> <span class="nf">PricingCalculator</span><span class="o">(</span><span class="kt">double</span> <span class="n">discountRate</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">discountRate</span> <span class="o">=</span> <span class="n">discountRate</span><span class="o">;</span>
+    <span class="o">}</span>
+    
+    <span class="kd">public</span> <span class="kt">double</span> <span class="nf">calculateDiscount</span><span class="o">(</span><span class="kt">double</span> <span class="n">price</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">price</span> <span class="o">*</span> <span class="n">discountRate</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="c1">// Usage</span>
+<span class="nc">PricingCalculator</span> <span class="n">calculator</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">PricingCalculator</span><span class="o">(</span><span class="mf">0.1</span><span class="o">);</span>
+<span class="kt">double</span> <span class="n">discount</span> <span class="o">=</span> <span class="n">calculator</span><span class="o">.</span><span class="na">calculateDiscount</span><span class="o">(</span><span class="mf">100.0</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>If these object properties were immutable/final, you only need to look at one place, i.e. where the object was initialized, to understand how their value may vary. When these properties are <em>mutable</em> however, you have to understand <em>every</em> place where this property is mutated.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ShoppingCart</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kt">double</span> <span class="n">discountRate</span><span class="o">;</span>  <span class="c1">// ← mutable state</span>
+    
+    <span class="kd">public</span> <span class="nf">ShoppingCart</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">discountRate</span> <span class="o">=</span> <span class="mf">0.0</span><span class="o">;</span>  <span class="c1">// mutation #1</span>
+    <span class="o">}</span>
+    
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">applyMemberDiscount</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">discountRate</span> <span class="o">=</span> <span class="mf">0.1</span><span class="o">;</span>  <span class="c1">// mutation #2</span>
+    <span class="o">}</span>
+    
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">applySeasonalDiscount</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">discountRate</span> <span class="o">=</span> <span class="mf">0.15</span><span class="o">;</span>  <span class="c1">// mutation #3</span>
+    <span class="o">}</span>
+    
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">applyLoyaltyBonus</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">discountRate</span> <span class="o">+=</span> <span class="mf">0.05</span><span class="o">;</span>  <span class="c1">// mutation #4</span>
+    <span class="o">}</span>
+    
+    <span class="kd">public</span> <span class="kt">double</span> <span class="nf">calculateDiscount</span><span class="o">(</span><span class="kt">double</span> <span class="n">price</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">price</span> <span class="o">*</span> <span class="n">discountRate</span><span class="o">;</span>  <span class="c1">// depends on mutations #1-4</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="c1">// Usage</span>
+<span class="nc">ShoppingCart</span> <span class="n">cart</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ShoppingCart</span><span class="o">();</span>
+<span class="n">cart</span><span class="o">.</span><span class="na">applyMemberDiscount</span><span class="o">();</span>
+<span class="n">cart</span><span class="o">.</span><span class="na">applyLoyaltyBonus</span><span class="o">();</span>
+<span class="kt">double</span> <span class="n">discount</span> <span class="o">=</span> <span class="n">cart</span><span class="o">.</span><span class="na">calculateDiscount</span><span class="o">(</span><span class="mf">100.0</span><span class="o">);</span> <span class="c1">// What is discountRate now?</span>
+</code></pre></div></div>
+
+<p>Every place where this value is mutated gives rise to n more states that your function now has to cater to. Not catering to these states risks leaving your application in an invalid state. It may be fine today but in a year’s time doing this will leave your system riddled with bugs that pop up “unexpectedly”.</p>
+
+<p>For a human or an AI agent, this code will remain difficult to reason about, as the search space for changes explodes exponentially, and making changes to such classes will become very slow.</p>
+
+<p>It is often even much much worse than this because when folks are not careful about mutation, they will be mutating state far beyond the scope of one class into other classes, and you will humanly not be able to reason about this code then, and the only signal then left to development will be test cases. Development will slow to a crawl.</p>
+
+<p>The more immutable properties being used by your methods, the more “impure” your function is and resultantly harder to reason about, both for an AI as well as for a human reviewer.</p>
+
+<p>Using the term “function purity” has a tendency to upset software engineers however, and you will find accusations of rigidity and impracticality common in such discussions at the mere mention of this word.</p>
+
+<p>What is important to remember however, is that you don’t have to be 100% pure 100% of the time. But you do need to be able to reason about function purity as a metric of your code quality, because purity is a spectrum that you can slide both high and low on. You don’t need to uproot your whole codebase to start implementing this advice.</p>
+
+<h3 id="when-to-break-the-rules">When to Break the Rules</h3>
+
+<p>These guidelines aren’t absolute. There are times when mutable state is the right choice: performance-critical loops, large data structures where copying is prohibitively expensive, stateful systems like game engines or UI frameworks where state machines are idiomatic.</p>
+
+<p>But here’s the key: <strong>you are a bad judge of the exceptions</strong>. The things that are obvious and simple to you as the author of the code will not be similarly obvious to another maintainer or yourself in a week’s time.</p>
+
+<p>These styles require learning to see code in a certain way. They don’t ask you to refactor a whole codebase today. They’re a low risk, high reward starting point on the road to shrinking the search space for code reviews, making coding more joyful and hopefully less adversarial with AI agents when you have to deal with the 23423th suggested code review of the day.</p>
+
+  </div><a class="u-url" href="/coding-practices/2026/04/28/tightening-feedback-loop-with-coding-styles.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Sohaib Baig</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Sohaib Baig</li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/sohaibbg"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">sohaibbg</span></a></li><li><a href="https://www.linkedin.com/in/sohaibbaig1"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#linkedin"></use></svg> <span class="username">sohaibbaig1</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

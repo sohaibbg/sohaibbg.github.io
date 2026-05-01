@@ -1,8 +1,12 @@
 # Site settings
-title: Dev Blog
-description: Thoughts on software engineering and coding practices
+title: Sohaib Baig
+description: ""
 url: "" # your GitHub Pages URL will go here, e.g., https://username.github.io
 baseurl: "" # if your blog is in a subdirectory, specify it here
+
+# Social links
+linkedin_username: sohaibbaig1
+github_username: sohaibbg
 
 # Build settings
 markdown: kramdown
