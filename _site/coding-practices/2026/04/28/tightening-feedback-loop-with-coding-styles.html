@@ -322,6 +322,52 @@
 
 <p>Your job then must be to realize that there is a scope one level above this current scope that is both (1) using your methods, and (2) relying on the state they are mutating. Here is where you should process the mutating state. You realize the needed value when needed, in the proximity of where it is actually being used, and you give this variable a name that is more communicative of how it is actually being used in that stage of execution, something that you will thank yourself for doing later.</p>
 
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// ViewModel uses calculateTotalCost() and names it for UI context</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">BasketView</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">double</span> <span class="nf">projectedBillWidget</span><span class="o">(</span><span class="nc">ShoppingBasket</span> <span class="n">basket</span><span class="o">)</span> <span class="o">{</span>
+        <span class="o">...</span>
+        <span class="c1">// the "total" in method name is specific to the</span>
+        <span class="c1">// shopping basket scope, its a total over the</span>
+        <span class="c1">// line items. variable name "lineItemsCost" is</span>
+        <span class="c1">// specific to this context. this is better</span>
+        <span class="c1">// encapsulation. in the view, "total"</span>
+        <span class="c1">// may otherwise be confused with the basket</span>
+        <span class="c1">// total, post discount total, maybe the payment</span>
+        <span class="c1">// is split with a redeemed voucher and loyalty</span>
+        <span class="c1">// points. a new variable automatically forces you</span>
+        <span class="c1">// to be more specific about naming</span>
+        <span class="kd">final</span> <span class="n">lineItemsCost</span> <span class="o">=</span> <span class="n">basket</span><span class="o">.</span><span class="na">calculateTotalCost</span><span class="o">();</span>
+        <span class="kd">final</span> <span class="n">discounts</span> <span class="o">=</span> <span class="o">...</span>
+        <span class="kd">final</span> <span class="n">costCharged</span> <span class="o">=</span> <span class="n">basketCost</span> <span class="o">-</span> <span class="n">discounts</span><span class="o">;</span>
+        <span class="k">return</span> <span class="nf">Column</span><span class="o">(</span>
+            <span class="s">"lineItemsCost"</span><span class="o">:</span> <span class="s">"$"</span> <span class="o">+</span> <span class="n">lineItemsCost</span><span class="o">.</span><span class="na">with2Decimals</span><span class="o">,</span>
+            <span class="s">"discounts"</span><span class="o">:</span> <span class="s">"- $"</span> <span class="o">+</span> <span class="n">discount</span><span class="o">.</span><span class="na">with2Decimals</span><span class="o">,</span>
+            <span class="s">"=========="</span>
+            <span class="s">"costCharged"</span><span class="o">:</span> <span class="s">"$"</span> <span class="o">+</span> <span class="n">costCharged</span><span class="o">.</span><span class="na">with2Decimals</span><span class="o">,</span>
+        <span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="c1">// Service uses it and names it for business context</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">OrderService</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="nc">OrderResponse</span> <span class="nf">processOrder</span><span class="o">(</span><span class="nc">ShoppingBasket</span> <span class="n">basket</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">double</span> <span class="n">chargedAmount</span> <span class="o">=</span> <span class="n">basket</span><span class="o">.</span><span class="na">calculateTotalCost</span><span class="o">()</span> <span class="o">+</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span> <span class="o">+</span> <span class="n">z</span><span class="o">;</span>
+        <span class="c1">// ... process payment ...</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nf">OrderResponse</span><span class="o">(</span><span class="n">chargedAmount</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">OrderResponse</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="kt">double</span> <span class="n">chargedTotalCost</span><span class="o">;</span>
+    
+    <span class="kd">public</span> <span class="nf">OrderResponse</span><span class="o">(</span><span class="kt">double</span> <span class="n">chargedTotalCost</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">chargedTotalCost</span> <span class="o">=</span> <span class="n">chargedTotalCost</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Those who resist this approach often cite the memory cost of immutability over mutable state. But in most cases, defaulting to mutability for memory reasons is premature optimization. Well scoped variables are trivial for a garbage collector that runs routinely anyway to deal with. If there actually is a memory constraint, profiling should be done and cache mechanisms could be considered, mutability being seen as one such cache mechanism.</p>
+
 <p>Additionally, this is easier to maintain. Tomorrow if you realize you want to change totalCost based on time specific discounts for Christmas or Labor Day or so, you can do that swapping the calculated value with an output from a service that can be swapped at runtime. Just one maintenance scenario that would have been trickier to otherwise accomplish with deeply rooted mutating state.</p>
 
 <h3 id="function-purity-as-a-spectrum">Function Purity as a Spectrum</h3>
@@ -387,25 +433,23 @@
 <span class="kt">double</span> <span class="n">discount</span> <span class="o">=</span> <span class="n">cart</span><span class="o">.</span><span class="na">calculateDiscount</span><span class="o">(</span><span class="mf">100.0</span><span class="o">);</span> <span class="c1">// What is discountRate now?</span>
 </code></pre></div></div>
 
-<p>Every place where this value is mutated gives rise to n more states that your function now has to cater to. Not catering to these states risks leaving your application in an invalid state. It may be fine today but in a year’s time doing this will leave your system riddled with bugs that pop up “unexpectedly”.</p>
+<p>Every place where this value is mutated gives rise to n more states that your function now has to cater to. Not catering to these states risks leaving your application in an invalid state. It may be fine today but in a year’s time doing this will leave your system riddled with bugs regarding “unexpected” use cases.</p>
 
-<p>For a human or an AI agent, this code will remain difficult to reason about, as the search space for changes explodes exponentially, and making changes to such classes will become very slow.</p>
+<p>It is often even much much worse than this example, because when folks are not careful about mutation, in reality they will be mutating state far beyond the scope of one class into other classes which mutate other classes, and building a mental model of this will be complex in a way that you could mathematically even then demonstrate.</p>
 
-<p>It is often even much much worse than this because when folks are not careful about mutation, they will be mutating state far beyond the scope of one class into other classes, and you will humanly not be able to reason about this code then, and the only signal then left to development will be test cases. Development will slow to a crawl.</p>
-
-<p>The more immutable properties being used by your methods, the more “impure” your function is and resultantly harder to reason about, both for an AI as well as for a human reviewer.</p>
+<p>The more immutable properties being used by your methods, the more “impure” your function is, impurity here referring to how dependent your output is on mutable, external variables. For a human or an AI agent, this makes it difficult to reason about, as the search space for changes explodes exponentially, and making changes to such classes becomes slow and risky.</p>
 
 <p>Using the term “function purity” has a tendency to upset software engineers however, and you will find accusations of rigidity and impracticality common in such discussions at the mere mention of this word.</p>
 
-<p>What is important to remember however, is that you don’t have to be 100% pure 100% of the time. But you do need to be able to reason about function purity as a metric of your code quality, because purity is a spectrum that you can slide both high and low on. You don’t need to uproot your whole codebase to start implementing this advice.</p>
+<p>What is important to remember is that purity is a spectrum that you can slide both high and low on. Don’t uproot your whole codebase to start implementing this advice. You don’t have to be 100% pure 100% of the time. But you do need to understand what it means so you can use it as a metric of your code quality.</p>
 
 <h3 id="when-to-break-the-rules">When to Break the Rules</h3>
 
 <p>These guidelines aren’t absolute. There are times when mutable state is the right choice: performance-critical loops, large data structures where copying is prohibitively expensive, stateful systems like game engines or UI frameworks where state machines are idiomatic.</p>
 
-<p>But here’s the key: <strong>you are a bad judge of the exceptions</strong>. The things that are obvious and simple to you as the author of the code will not be similarly obvious to another maintainer or yourself in a week’s time.</p>
+<p>But here’s the key: <strong>you yourself will be a bad judge of the exceptions</strong>. The things that are obvious and simple to you as the author of the code will not be similarly obvious to another maintainer or yourself in a week’s time.</p>
 
-<p>These styles require learning to see code in a certain way. They don’t ask you to refactor a whole codebase today. They’re a low risk, high reward starting point on the road to shrinking the search space for code reviews, making coding more joyful and hopefully less adversarial with AI agents when you have to deal with the 23423th suggested code review of the day.</p>
+<p>These styles require learning to see code in a certain way. They don’t ask you to refactor a whole codebase today. They’re defaults, not additional structures, that keep you in flow state for longer by shrinking the search space for code reviews. Hopefully they will make coding more joyful and less adversarial with AI agents when you have to deal with the 23423th suggested code review of the day.</p>
 
   </div><a class="u-url" href="/coding-practices/2026/04/28/tightening-feedback-loop-with-coding-styles.html" hidden></a>
 </article>

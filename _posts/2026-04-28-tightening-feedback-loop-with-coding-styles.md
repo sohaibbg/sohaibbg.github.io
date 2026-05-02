@@ -285,6 +285,53 @@ Mutable state is typically obscuring two realities about your code:
 
 Your job then must be to realize that there is a scope one level above this current scope that is both (1) using your methods, and (2) relying on the state they are mutating. Here is where you should process the mutating state. You realize the needed value when needed, in the proximity of where it is actually being used, and you give this variable a name that is more communicative of how it is actually being used in that stage of execution, something that you will thank yourself for doing later.
 
+```java
+// ViewModel uses calculateTotalCost() and names it for UI context
+public class BasketView {
+    public double projectedBillWidget(ShoppingBasket basket) {
+        ...
+        // the "total" in method name is specific to the
+        // shopping basket scope, its a total over the
+        // line items. variable name "lineItemsCost" is
+        // specific to this context. this is better
+        // encapsulation. in the view, "total"
+        // may otherwise be confused with the basket
+        // total, post discount total, maybe the payment
+        // is split with a redeemed voucher and loyalty
+        // points. a new variable automatically forces you
+        // to be more specific about naming
+        final lineItemsCost = basket.calculateTotalCost();
+        final discounts = ...
+        final costCharged = basketCost - discounts;
+        return Column(
+            "lineItemsCost": "$" + lineItemsCost.with2Decimals,
+            "discounts": "- $" + discount.with2Decimals,
+            "=========="
+            "costCharged": "$" + costCharged.with2Decimals,
+        );
+    }
+}
+
+// Service uses it and names it for business context
+public class OrderService {
+    public OrderResponse processOrder(ShoppingBasket basket) {
+        double chargedAmount = basket.calculateTotalCost() + x + y + z;
+        // ... process payment ...
+        return new OrderResponse(chargedAmount);
+    }
+}
+
+public class OrderResponse {
+    private final double chargedTotalCost;
+    
+    public OrderResponse(double chargedTotalCost) {
+        this.chargedTotalCost = chargedTotalCost;
+    }
+}
+```
+
+Those who resist this approach often cite the memory cost of immutability over mutable state. But in most cases, defaulting to mutability for memory reasons is premature optimization. Well scoped variables are trivial for a garbage collector that runs routinely anyway to deal with. If there actually is a memory constraint, profiling should be done and cache mechanisms could be considered, mutability being seen as one such cache mechanism.
+
 Additionally, this is easier to maintain. Tomorrow if you realize you want to change totalCost based on time specific discounts for Christmas or Labor Day or so, you can do that swapping the calculated value with an output from a service that can be swapped at runtime. Just one maintenance scenario that would have been trickier to otherwise accomplish with deeply rooted mutating state.
 
 ### Function Purity as a Spectrum
@@ -353,22 +400,20 @@ cart.applyLoyaltyBonus();
 double discount = cart.calculateDiscount(100.0); // What is discountRate now?
 ```
 
-Every place where this value is mutated gives rise to n more states that your function now has to cater to. Not catering to these states risks leaving your application in an invalid state. It may be fine today but in a year's time doing this will leave your system riddled with bugs that pop up "unexpectedly".
+Every place where this value is mutated gives rise to n more states that your function now has to cater to. Not catering to these states risks leaving your application in an invalid state. It may be fine today but in a year's time doing this will leave your system riddled with bugs regarding "unexpected" use cases.
 
-For a human or an AI agent, this code will remain difficult to reason about, as the search space for changes explodes exponentially, and making changes to such classes will become very slow.
+It is often even much much worse than this example, because when folks are not careful about mutation, in reality they will be mutating state far beyond the scope of one class into other classes which mutate other classes, and building a mental model of this will be complex in a way that you could mathematically even then demonstrate.
 
-It is often even much much worse than this because when folks are not careful about mutation, they will be mutating state far beyond the scope of one class into other classes, and you will humanly not be able to reason about this code then, and the only signal then left to development will be test cases. Development will slow to a crawl.
-
-The more immutable properties being used by your methods, the more "impure" your function is and resultantly harder to reason about, both for an AI as well as for a human reviewer.
+The more immutable properties being used by your methods, the more "impure" your function is, impurity here referring to how dependent your output is on mutable, external variables. For a human or an AI agent, this makes it difficult to reason about, as the search space for changes explodes exponentially, and making changes to such classes becomes slow and risky.
 
 Using the term "function purity" has a tendency to upset software engineers however, and you will find accusations of rigidity and impracticality common in such discussions at the mere mention of this word.
 
-What is important to remember however, is that you don't have to be 100% pure 100% of the time. But you do need to be able to reason about function purity as a metric of your code quality, because purity is a spectrum that you can slide both high and low on. You don't need to uproot your whole codebase to start implementing this advice.
+What is important to remember is that purity is a spectrum that you can slide both high and low on. Don't uproot your whole codebase to start implementing this advice. You don't have to be 100% pure 100% of the time. But you do need to understand what it means so you can use it as a metric of your code quality.
 
 ### When to Break the Rules
 
 These guidelines aren't absolute. There are times when mutable state is the right choice: performance-critical loops, large data structures where copying is prohibitively expensive, stateful systems like game engines or UI frameworks where state machines are idiomatic.
 
-But here's the key: **you are a bad judge of the exceptions**. The things that are obvious and simple to you as the author of the code will not be similarly obvious to another maintainer or yourself in a week's time.
+But here's the key: **you yourself will be a bad judge of the exceptions**. The things that are obvious and simple to you as the author of the code will not be similarly obvious to another maintainer or yourself in a week's time.
 
-These styles require learning to see code in a certain way. They don't ask you to refactor a whole codebase today. They're a low risk, high reward starting point on the road to shrinking the search space for code reviews, making coding more joyful and hopefully less adversarial with AI agents when you have to deal with the 23423th suggested code review of the day.
+These styles require learning to see code in a certain way. They don't ask you to refactor a whole codebase today. They're defaults, not additional structures, that keep you in flow state for longer by shrinking the search space for code reviews. Hopefully they will make coding more joyful and less adversarial with AI agents when you have to deal with the 23423th suggested code review of the day.
