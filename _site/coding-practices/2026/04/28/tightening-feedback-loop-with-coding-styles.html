@@ -57,8 +57,6 @@
 
 <h2 id="1-early-return-patternusing-guard-clauses">1. Early Return Pattern/Using Guard Clauses</h2>
 
-<p>As computer scientists, our ability to break problems into sub problems before solving them is core to a systems approach. Similarly, in inductive reasoning in maths, we identify and get rid of simpler cases first to make our lives easier.</p>
-
 <p>Consider the following example, which I have frequently seen in codebases, of nested statements.</p>
 
 <div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">assemblyCheck</span><span class="o">()</span> <span class="o">{</span>
@@ -166,6 +164,8 @@
 </code></pre></div></div>
 
 <p>Can you spot the error now? (The nested and early return code snippets are functionally equivalent.)</p>
+
+<p>As computer scientists, our ability to break problems into sub problems before solving them is core to a systems approach. Similarly, in inductive reasoning in maths, we identify and get rid of simpler cases first to make our lives easier.</p>
 
 <p>The error is that the <code class="language-plaintext highlighter-rouge">basketService</code> code is tied to the <code class="language-plaintext highlighter-rouge">collar.isFixed()</code> condition instead of the <code class="language-plaintext highlighter-rouge">jacket.isBrushed()</code> condition where it should be. Nesting clauses fling “else” clauses far down the line, making it non trivial to decipher which code is logically coupled to which case.</p>
 

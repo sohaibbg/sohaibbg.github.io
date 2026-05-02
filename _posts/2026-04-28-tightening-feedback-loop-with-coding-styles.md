@@ -15,8 +15,6 @@ These examples depict real world usecases of existing code + a delta of change r
 
 ## 1. Early Return Pattern/Using Guard Clauses
 
-As computer scientists, our ability to break problems into sub problems before solving them is core to a systems approach. Similarly, in inductive reasoning in maths, we identify and get rid of simpler cases first to make our lives easier.
-
 Consider the following example, which I have frequently seen in codebases, of nested statements.
 
 ```java
@@ -127,6 +125,8 @@ public boolean assemblyCheck() {
 ```
 
 Can you spot the error now? (The nested and early return code snippets are functionally equivalent.)
+
+As computer scientists, our ability to break problems into sub problems before solving them is core to a systems approach. Similarly, in inductive reasoning in maths, we identify and get rid of simpler cases first to make our lives easier.
 
 The error is that the `basketService` code is tied to the `collar.isFixed()` condition instead of the `jacket.isBrushed()` condition where it should be. Nesting clauses fling "else" clauses far down the line, making it non trivial to decipher which code is logically coupled to which case.
 
