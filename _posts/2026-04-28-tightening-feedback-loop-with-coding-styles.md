@@ -7,9 +7,11 @@ categories: coding-practices
 
 Tightening the human feedback loop is prominent now as a bottleneck with agent assisted coding. Whilst coding "practices" like continuous deployment and TDD are already espoused by many, I wanted to mention "styles", instead, of coding.
 
-The core idea is learning to code in a style that makes the boundaries of change clear, such that when changes are made, typically by an AI agent, you can be confident that unexpected "side-effects" will not occur as a result. This entails using practices like guard clauses and immutability which come from functional programming. Over time it will help evolve in you a sense of seeing code as states and outcomes, a level of abstraction higher than seeing code "imperatively", i.e. in loops and conditions. Working at a higher abstraction level = more comprehension with less effort, which is something that also goes far with LLMs.
+The core idea is learning to code in a style that makes the boundaries of change clear, such that when changes are made, typically by an AI agent, you can be confident that unexpected "side-effects" will not occur as a result. This entails using practices like guard clauses and immutability which come from functional programming.
 
-The benefit is twofold: not only do code reviews become faster, but the codebase is left in a more maintainable state. Changes become easier to reason about, reducing the cognitive load on both human reviewers and AI agents.
+Over time it will help evolve in you a sense of seeing code as states and outcomes, a level of abstraction higher than seeing code "imperatively", i.e. in loops and conditions. Working at a higher abstraction level = more comprehension with less effort, which is something that also goes far with LLMs.
+
+The benefit is twofold: not only do code reviews become faster, but the codebase is left in a more maintainable state. Changes become easier to reason about, reducing both the cognitive load on human reviewers and token use with AI agents.
 
 These examples depict real world usecases of existing code + a delta of change representing challenges with maintainability of code. By the way, "memory" features like Claude.md make inculcating these patterns trivial, it is your human brain you must train to see the patterns in this style of coding.
 
@@ -132,7 +134,9 @@ The error is that the `basketService` code is tied to the `collar.isFixed()` con
 
 Where would you add the new condition, `pants.areTheRightSize()`?
 
-In nested code, introducing another level of nesting at the deepest level can feel intuitive, before any else statements require you to shuffle around brackets. Switching up the order of if-cases is jarring with moving braces and logic to be deciphered to ensure correctness is maintained. With the early-return style, reordering conditions in most IDEs is a simple select then Alt+Up or Alt+Down, versus nested code where braces have to be carefully aligned.
+In nested code, introducing another level of nesting at the deepest level can feel intuitive, before any else statements require you to shuffle around brackets. Switching up the order of if-cases is jarring with moving braces and logic to be deciphered to ensure correctness is maintained.
+
+With the early-return style, reordering conditions in most IDEs is a simple select then Alt+Up or Alt+Down, versus nested code where braces have to be carefully aligned.
 
 Consider how much easier it is to add a new condition to the early-return style code. It is much easier to notice in this style also that there is already a condition coupled with pants in the method (`if(!pants.arePressed())`) in this style, and factor it out into a separate method.
 
@@ -166,7 +170,9 @@ private boolean checkPants() {
 }
 ```
 
-It is no surprise that in codebases where nesting is preferred, methods often run very long. This harms readability: if there are 5 methods and 1 of them has a change, you only need to review that one method unless others are referenced. With 1 huge method containing a change, you need to check all the variables to catch unexpected side effects on state being used for control flow elsewhere in the method.
+It is no surprise that in codebases where nesting is preferred, scopes are not regularly extracted and methods tend to run very long.
+
+This harms readability: In 1 huge method, the search space for changes is much larger, compared to the same method split into 5, where you might safely be able to ignore scopes that haven't been touched by changes.
 
 ## 2. Smaller Methods and the Namespace Advantage
 
@@ -283,7 +289,9 @@ Mutable state is typically obscuring two realities about your code:
 1. Every control flow of every method where that property is mutated (`totalCost += whatever`) represents a scattered logic. This logic can be extracted from across those methods and unified into one, new, communicatively named method (such as `calculateTotalCost()` in our case). Doing this leaves methods lighter and more maintainable.
 2. Your methods have deceptive return types. The output of your methods is not just the returned object/void, but also the delta of change to each mutated property.
 
-Your job then must be to realize that there is a scope one level above this current scope that is both (1) using your methods, and (2) relying on the state they are mutating. Here is where you should process the mutating state. You realize the needed value when needed, in the proximity of where it is actually being used, and you give this variable a name that is more communicative of how it is actually being used in that stage of execution, something that you will thank yourself for doing later.
+Your job then must be to realize that there is a scope one level above this current scope that is both (1) using your methods, and (2) relying on the state they are mutating. Here is where you should process the mutating state.
+
+Realize the object value in this scope, only when needed, in the proximity of where it is actually being used to make it easier to understand *how* its being used, and name it specific to this context, not reusing names from a scope below that breaks the mental model of encapsulation.
 
 ```java
 // ViewModel uses calculateTotalCost() and names it for UI context
@@ -330,7 +338,7 @@ public class OrderResponse {
 }
 ```
 
-Those who resist this approach often cite the memory cost of immutability over mutable state. But in most cases, defaulting to mutability for memory reasons is premature optimization. Well scoped variables are trivial for a garbage collector that runs routinely anyway to deal with. If there actually is a memory constraint, profiling should be done and cache mechanisms could be considered, mutability being seen as one such cache mechanism.
+Those who resist this approach often cite the memory cost of immutability over mutable state. But in most cases, defaulting to mutability for memory reasons is premature optimization. The garbage collection of immutable variables in small methods is trivial. If there actually is a memory constraint, profiling should be done and cache mechanisms could be considered, mutability being seen as one such cache mechanism.
 
 Additionally, this is easier to maintain. Tomorrow if you realize you want to change totalCost based on time specific discounts for Christmas or Labor Day or so, you can do that swapping the calculated value with an output from a service that can be swapped at runtime. Just one maintenance scenario that would have been trickier to otherwise accomplish with deeply rooted mutating state.
 
@@ -408,7 +416,7 @@ The more immutable properties being used by your methods, the more "impure" your
 
 Using the term "function purity" has a tendency to upset software engineers however, and you will find accusations of rigidity and impracticality common in such discussions at the mere mention of this word.
 
-What is important to remember is that purity is a spectrum that you can slide both high and low on. Don't uproot your whole codebase to start implementing this advice. You don't have to be 100% pure 100% of the time. But you do need to understand what it means so you can use it as a metric of your code quality.
+What is important to remember is that purity is a spectrum that you can slide both high and low on. Don't uproot your whole codebase to start implementing this advice. You don't have to be 100% pure 100% of the time. But you do need to understand what it means so you can use it as a warning sign of your code quality.
 
 ### When to Break the Rules
 
@@ -417,3 +425,6 @@ These guidelines aren't absolute. There are times when mutable state is the righ
 But here's the key: **you yourself will be a bad judge of the exceptions**. The things that are obvious and simple to you as the author of the code will not be similarly obvious to another maintainer or yourself in a week's time.
 
 These styles require learning to see code in a certain way. They don't ask you to refactor a whole codebase today. They're defaults, not additional structures, that keep you in flow state for longer by shrinking the search space for code reviews. Hopefully they will make coding more joyful and less adversarial with AI agents when you have to deal with the 23423th suggested code review of the day.
+
+Comments welcome here;
+https://www.linkedin.com/posts/sohaibbaig1_shrinking-the-search-space-for-code-reviews-activity-7456003268729692161-cDW6
