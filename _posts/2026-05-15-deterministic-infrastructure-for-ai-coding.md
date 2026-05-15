@@ -34,13 +34,9 @@ public class SinglePublicMethodRuleTest {
 
 The actual rules should of course be specific to your project and modular to the modules within. This kind of stuff often gets leaked to skills files when it can be done perfectly well with deterministic tools.
 
-## Comprehensibility Through Architecture
-
 Keeping code maintainable largely means keeping it comprehensible. Comprehensibility comes with architecture that enforces relationships across "entities" that are easier to reason about. When the entities are code, the architecture includes abstractions, adherence to using terminology from the domain of the system, and style heuristics.
 
 Style heuristics include things like immutability, method lengths, line lengths against nesting, condition lengths before they're refactored into explainer variables, all that makes cyclomatic complexity balloon up. With good style heuristics, you require less cognitive load to build abstractions, and you build better abstractions as a result. With poor style heuristics, your abstractions need to abstract such large surface areas that namespaces tend to collapse, and code reviews become a headache.
-
-## The Non-Determinism Problem
 
 When I started agent-assisted coding, I struggled between setting the agent instructions, and wanting it to do things my way in a manner that "skills" was too unreliable for. Your "feedback loop" is not just the sum of tools you have fitted into your agentic workflow, you can also further categorize your prompts broadly into domain-feature/bug resolution/migration instructions (the meat of the chore), and refactoring instructions like how functionality is grouped, how you want variables to be named, etc.
 
@@ -50,11 +46,7 @@ It felt non-idiomatic because agents should essentially be seen as injections of
 
 When we know agents are making our code quality worse, as engineers, our job is break problems down into smaller problems and solve them, not wish for Anthropic to fix it in the next Opus model.
 
-## Code Style as Culture
-
 Code style heuristics are like a developer's handwriting, or an organization's culture. They cannot be passed by a singular organization like Anthropic anyway. Abandoning them is not just not necessary, but these heuristics are in fact shortcuts that save extra work from being done. That "non-determinism" (AI generated code) does not need to be corrected in the form of a human feedback loop and those decisions can be automatically enforced by some tests and rules on code "styles" instead, instead of just the code's behavior and execution path.
-
-## Breaking Down the Coding Problem
 
 If these heuristics can be encoded as deterministic tests and rules using ArchUnit and SonarQube, it frees us up into breaking down "coding" itself as a problem and solve those individually with AI. I categorize code, or work that I do in writing features, as dealing with:
 
@@ -64,8 +56,6 @@ If these heuristics can be encoded as deterministic tests and rules using ArchUn
 - **Performance and security** considerations
 
 For architecture, one can study books, learn from good codebases, study different styles like functional programming, and gain practice and experience at their job for improvement. For better abstractions, one must understand the business domain better. For naming skills, it is simply your skills in the English language, and for performance and security, it is what we learn in academia with respect to algorithms and maths.
-
-## The Tooling Map
 
 In agent assisted coding the same things map to the use of artifacts and tools. The interesting part is not skills, but how well you can inject the context and make use of deterministic tooling to restrain the agent from making mistakes. And it remains work that requires human interaction, comprehension and decision making, that LLMs fundamentally cannot do, and which is what keeps these tasks interesting and within the realm of "engineering".
 
